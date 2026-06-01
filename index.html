@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F0F0F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Sourdough">
+<link rel="manifest" href="manifest.json">
+<title>Sourdough Scheduler</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F0F0F;
+  --s1:#181818;
+  --s2:#222222;
+  --s3:#2C2C2C;
+  --b1:rgba(255,255,255,0.07);
+  --b2:rgba(255,255,255,0.13);
+  --t1:#F0F0F0;
+  --t2:rgba(240,240,240,0.45);
+  --t3:rgba(240,240,240,0.22);
+  --accent:#D97706;
+  --accent-t:rgba(217,119,6,0.14);
+  --accent-hi:#F5A623;
+  --r:12px;
+  --rl:16px;
+}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+#app{height:100%;position:relative;overflow:hidden}
+
+/* ── SCREENS ─────────────────────────── */
+.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
+.screen.hidden{display:none!important}
+
+/* ── TOPBAR ──────────────────────────── */
+.topbar{padding:16px 20px 14px;padding-top:max(16px,env(safe-area-inset-top) + 10px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:0.5px solid var(--b1)}
+.wordmark{font-size:14px;font-weight:500;color:var(--t2);letter-spacing:0.3px}
+.topbar-action{background:none;border:none;color:var(--t2);font-size:14px;font-family:inherit;cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent}
+.topbar-action i{font-size:18px}
+
+/* ── CONTENT ─────────────────────────── */
+.content{flex:1;padding:24px 20px;padding-bottom:max(40px,env(safe-area-inset-bottom) + 24px)}
+.screen-title{font-size:26px;font-weight:500;line-height:1.2;margin-bottom:28px}
+
+/* ── FIELD ───────────────────────────── */
+.field{margin-bottom:22px}
+.field-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.7px;color:var(--t3);margin-bottom:10px}
+
+/* ── CHIPS ───────────────────────────── */
+.chips{display:flex;gap:7px}
+.chips-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:2px}
+.chips-scroll::-webkit-scrollbar{display:none}
+.chip{flex:1;padding:11px 6px;background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);text-align:center;font-size:14px;color:var(--t2);cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:background 0.12s,border-color 0.12s,color 0.12s}
+.chip:active{background:var(--s2)}
+.chip.selected{background:var(--accent-t);border-color:var(--accent);color:var(--accent-hi)}
+.day-chip{flex:0 0 52px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px}
+.day-name{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.4px}
+.day-date{font-size:11px;color:var(--t3)}
+.day-chip.selected .day-date{color:var(--accent)}
+
+/* ── TIME INPUT ──────────────────────── */
+.time-row{display:flex;align-items:center;gap:10px}
+.time-input{flex:1;background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);color:var(--t1);font-size:16px;font-family:inherit;padding:13px 10px;text-align:center;-webkit-appearance:none;appearance:none}
+.time-input:focus{outline:none;border-color:var(--b2)}
+.time-div{font-size:13px;color:var(--t3);flex-shrink:0}
+
+/* ── TOGGLE ──────────────────────────── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;gap:16px}
+.toggle-label{font-size:15px;color:var(--t1)}
+.toggle-sub{font-size:12px;color:var(--t2);margin-top:3px;line-height:1.4}
+.toggle-pill{width:44px;height:26px;background:var(--s3);border-radius:13px;position:relative;flex-shrink:0;transition:background 0.18s}
+.toggle-pill.on{background:var(--accent)}
+.toggle-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left 0.18s;box-shadow:0 1px 3px rgba(0,0,0,0.4)}
+.toggle-pill.on .toggle-knob{left:21px}
+
+/* ── CAL BUTTON ──────────────────────── */
+.cal-btn{display:flex;align-items:center;gap:12px;background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:13px 16px;cursor:pointer;font-family:inherit;width:100%;text-align:left;-webkit-tap-highlight-color:transparent}
+.cal-icon{width:36px;height:36px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cal-icon i{font-size:18px;color:var(--accent)}
+.cal-text-label{font-size:14px;color:var(--t1)}
+.cal-text-sub{font-size:12px;color:var(--t2);margin-top:2px}
+.cal-arrow{margin-left:auto;font-size:16px;color:var(--t3);flex-shrink:0}
+.cal-btn.connected .cal-icon i{color:#22C55E}
+
+/* ── BUTTONS ─────────────────────────── */
+.btn-primary{width:100%;padding:16px;background:var(--t1);color:var(--bg);border:none;border-radius:var(--rl);font-size:16px;font-weight:500;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn-primary:active{opacity:0.85}
+.btn-primary:disabled{opacity:0.3;cursor:default}
+.btn-ghost{background:none;border:none;color:var(--t2);font-size:14px;font-family:inherit;cursor:pointer;padding:4px 0;-webkit-tap-highlight-color:transparent}
+.btn-outline{width:100%;padding:14px;background:none;border:0.5px solid var(--b2);border-radius:var(--rl);color:var(--t2);font-size:15px;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* ── PREVIEW / SCHEDULE SHARED ───────── */
+.amber-card{background:var(--accent);border-radius:var(--rl);padding:20px;margin-bottom:16px}
+.ac-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.7px;color:rgba(0,0,0,0.5);margin-bottom:4px}
+.ac-value{font-size:22px;font-weight:500;color:#0F0F0F;line-height:1.2;margin-bottom:4px}
+.ac-sub{font-size:13px;color:rgba(0,0,0,0.55)}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.stat-card{background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:14px}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--t3);margin-bottom:4px}
+.stat-value{font-size:20px;font-weight:500;color:var(--t1)}
+
+/* ── TIMELINE ────────────────────────── */
+.day-group{margin-bottom:24px}
+.day-header{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.7px;color:var(--t3);margin-bottom:6px;padding-bottom:6px;border-bottom:0.5px solid var(--b1)}
+.tl-row{display:flex;gap:14px;padding:11px 0;border-top:0.5px solid var(--b1)}
+.tl-row:first-of-type{border-top:none}
+.tl-dot-col{display:flex;flex-direction:column;align-items:center;padding-top:5px}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tl-dot.active{background:var(--accent)}
+.tl-dot.wait{background:var(--s3);border:1px solid var(--b2)}
+.tl-dot.done{background:var(--s2);border:1px solid var(--b1)}
+.tl-dot.now{background:var(--accent);box-shadow:0 0 0 3px var(--accent-t)}
+.tl-body{flex:1;min-width:0}
+.tl-time{font-size:12px;color:var(--t3);margin-bottom:2px}
+.tl-name{font-size:15px;color:var(--t1);line-height:1.3}
+.tl-name.muted{color:var(--t2)}
+.tl-name.faded{color:var(--t3);text-decoration:line-through}
+.tl-dur{font-size:12px;color:var(--t3);margin-top:2px}
+
+/* ── NEXT CALLOUT ────────────────────── */
+.next-card{background:var(--accent);border-radius:var(--rl);padding:20px;margin-bottom:16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nc-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.7px;color:rgba(0,0,0,0.5);margin-bottom:4px}
+.nc-step{font-size:22px;font-weight:500;color:#0F0F0F;margin-bottom:4px}
+.nc-when{font-size:13px;color:rgba(0,0,0,0.6)}
+.waiting-card{background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--rl);padding:20px;margin-bottom:16px;text-align:center}
+.waiting-label{font-size:16px;color:var(--t1);margin-bottom:4px}
+.waiting-sub{font-size:13px;color:var(--t2)}
+.done-card{background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--rl);padding:24px;margin-bottom:16px;text-align:center}
+.done-icon{font-size:32px;color:var(--accent);margin-bottom:12px}
+.done-label{font-size:20px;font-weight:500;color:var(--t1);margin-bottom:6px}
+.done-sub{font-size:13px;color:var(--t2);line-height:1.5}
+
+/* ── ICS BUTTON ──────────────────────── */
+.ics-btn{display:flex;align-items:center;gap:12px;background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:14px 16px;cursor:pointer;font-family:inherit;width:100%;text-align:left;margin-bottom:20px;-webkit-tap-highlight-color:transparent}
+.ics-icon{font-size:18px;color:var(--accent)}
+.ics-label{font-size:14px;color:var(--t1);flex:1}
+.ics-arrow{font-size:14px;color:var(--t3)}
+
+/* ── STEP SCREEN ─────────────────────── */
+.step-tag{display:inline-block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.6px;background:var(--accent-t);color:var(--accent-hi);padding:4px 10px;border-radius:20px;margin-bottom:20px}
+.step-counter{font-size:12px;color:var(--t3);float:right;margin-top:4px}
+.step-title{font-size:30px;font-weight:500;line-height:1.15;margin-bottom:8px}
+.step-duration{font-size:14px;color:var(--t2);margin-bottom:32px}
+.instructions{display:flex;flex-direction:column;gap:14px;margin-bottom:36px}
+.inst-row{display:flex;gap:14px;align-items:flex-start}
+.inst-num{width:26px;height:26px;border-radius:50%;background:var(--s2);border:0.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--t2);flex-shrink:0;margin-top:2px}
+.inst-text{font-size:17px;color:var(--t1);line-height:1.55;flex:1}
+.complete-area{border-top:0.5px solid var(--b1);padding-top:24px}
+.check-row{display:flex;align-items:center;gap:14px;margin-bottom:18px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.check-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s}
+.check-circle.checked{background:var(--accent);border-color:var(--accent)}
+.check-circle i{font-size:15px;color:var(--bg);opacity:0;transition:opacity 0.15s}
+.check-circle.checked i{opacity:1}
+.check-label{font-size:16px;color:var(--t1)}
+
+/* ── NO BAKE MSG ─────────────────────── */
+.info-note{background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--t2);line-height:1.55;margin-bottom:20px}
+.error-note{background:rgba(220,38,38,0.08);border:0.5px solid rgba(220,38,38,0.2);border-radius:var(--r);padding:14px 16px;font-size:14px;color:#FCA5A5;line-height:1.55;margin-bottom:20px;display:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── SCREEN: SCHEDULING ──────────────────────────────────── -->
+<div id="screen-scheduling" class="screen hidden">
+  <div class="topbar">
+    <div class="wordmark">Sourdough</div>
+  </div>
+  <div class="content">
+    <h1 class="screen-title">When do you want fresh bread?</h1>
+
+    <div class="field">
+      <div class="field-label">Day</div>
+      <div class="chips-scroll" id="day-chips"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Time of day</div>
+      <div class="chips">
+        <button class="chip" data-tod="morning" onclick="selectTOD(this)">Morning</button>
+        <button class="chip selected" data-tod="afternoon" onclick="selectTOD(this)">Afternoon</button>
+        <button class="chip" data-tod="evening" onclick="selectTOD(this)">Evening</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Your sleep window</div>
+      <div class="time-row">
+        <input type="time" class="time-input" id="sleep-start" value="23:00">
+        <div class="time-div">to</div>
+        <input type="time" class="time-input" id="sleep-end" value="07:00">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Cold proof</div>
+      <div class="toggle-row" onclick="toggleColdProof()">
+        <div>
+          <div class="toggle-label">Cold proof in the fridge</div>
+          <div class="toggle-sub">12–36 hours. Better flavor. Adds a night to your schedule.</div>
+        </div>
+        <div class="toggle-pill" id="cold-proof-toggle">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Calendar <span style="color:var(--t3);font-size:10px;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <button class="cal-btn" id="cal-btn" onclick="connectCalendar()">
+        <div class="cal-icon"><i class="ti ti-calendar"></i></div>
+        <div>
+          <div class="cal-text-label">Connect Google Calendar</div>
+          <div class="cal-text-sub">Block busy times automatically</div>
+        </div>
+        <i class="ti ti-chevron-right cal-arrow"></i>
+      </button>
+    </div>
+
+    <div class="error-note" id="schedule-error"></div>
+    <button class="btn-primary" onclick="planBake()">Plan my bake</button>
+  </div>
+</div>
+
+<!-- ── SCREEN: PREVIEW ─────────────────────────────────────── -->
+<div id="screen-preview" class="screen hidden">
+  <div class="topbar">
+    <button class="topbar-action" onclick="showScreen('scheduling')"><i class="ti ti-arrow-left"></i> Back</button>
+    <div class="wordmark">Sourdough</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="content">
+    <div class="amber-card" id="preview-card"></div>
+    <div class="stats-grid" id="preview-stats"></div>
+    <div id="preview-timeline"></div>
+    <button class="btn-primary" onclick="confirmBake()" style="margin-bottom:12px">Start this bake</button>
+    <button class="btn-ghost" style="width:100%;text-align:center" onclick="showScreen('scheduling')">Adjust time</button>
+  </div>
+</div>
+
+<!-- ── SCREEN: SCHEDULE ────────────────────────────────────── -->
+<div id="screen-schedule" class="screen hidden">
+  <div class="topbar">
+    <div class="wordmark">Sourdough</div>
+    <button class="topbar-action" onclick="cancelBake()">Cancel bake</button>
+  </div>
+  <div class="content">
+    <div id="next-area"></div>
+    <button class="ics-btn" onclick="handleICS()">
+      <i class="ti ti-calendar-down ics-icon"></i>
+      <span class="ics-label">Add all steps to calendar</span>
+      <i class="ti ti-download ics-arrow"></i>
+    </button>
+    <div id="schedule-timeline"></div>
+  </div>
+</div>
+
+<!-- ── SCREEN: ACTIVE STEP ─────────────────────────────────── -->
+<div id="screen-step" class="screen hidden">
+  <div class="topbar">
+    <button class="topbar-action" onclick="showScreen('schedule')"><i class="ti ti-arrow-left"></i></button>
+    <div class="wordmark">Sourdough</div>
+    <span class="step-counter" id="step-counter"></span>
+  </div>
+  <div class="content">
+    <div class="step-tag">Active now</div>
+    <h1 class="step-title" id="step-title"></h1>
+    <div class="step-duration" id="step-duration"></div>
+    <div class="instructions" id="step-instructions"></div>
+    <div class="complete-area">
+      <div class="check-row" onclick="toggleCheck()">
+        <div class="check-circle" id="step-check"><i class="ti ti-check"></i></div>
+        <span class="check-label">Mark this step complete</span>
+      </div>
+      <button class="btn-primary" id="done-btn" onclick="completeStep()" disabled>Done</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+<script>
+// ── RECIPE ───────────────────────────────────────────────────────────────────
+const RECIPE = [
+  { id:'feed_starter', name:'Feed your starter', type:'active', duration:10,
+    instructions:[
+      'Take your starter out of the fridge.',
+      'Discard down to 50g of starter.',
+      'Add 50g flour and 50g lukewarm water.',
+      'Mix thoroughly until no dry flour remains.',
+      'Cover loosely — not airtight.'
+    ],
+    note:'Use at peak: doubled in size, very bubbly, domed on top.'
+  },
+  { id:'starter_peak', name:'Starter peaks', type:'wait', duration:480, min:240, max:720,
+    note:'Warmer room = faster. Use at peak — doubled, very bubbly, domed on top.'
+  },
+  { id:'mix', name:'Mix the dough', type:'active', duration:15,
+    instructions:[
+      'Add 120g of your peaked starter to a large bowl.',
+      'Add 310ml lukewarm water.',
+      'Add 500g flour and 2 tsp salt.',
+      'Mix with your hands until no dry flour remains — it will look shaggy.',
+      'Cover with a damp towel.'
+    ]
+  },
+  { id:'autolyse', name:'Autolyse rest', type:'wait', duration:60,
+    note:'Leave covered. Gluten is developing on its own.'
+  },
+  { id:'fold_1', name:'Stretch & fold — 1', type:'active', duration:5,
+    instructions:[
+      'Wet your hands thoroughly.',
+      'Grab one side of the dough and stretch it up as high as it will go without tearing.',
+      'Fold it over the top.',
+      'Rotate the bowl 90° and repeat three more times — four folds total.',
+      'Cover with the damp towel.'
+    ]
+  },
+  { id:'rest_1', name:'Rest', type:'wait', duration:30 },
+  { id:'fold_2', name:'Stretch & fold — 2', type:'active', duration:5,
+    instructions:[
+      'Wet your hands.',
+      'Four folds, rotating 90° between each.',
+      'Dough should feel a bit stronger and more cooperative.',
+      'Cover.'
+    ]
+  },
+  { id:'rest_2', name:'Rest', type:'wait', duration:30 },
+  { id:'fold_3', name:'Stretch & fold — 3', type:'active', duration:5,
+    instructions:[
+      'Wet your hands.',
+      'Four folds, rotating 90° between each.',
+      'Dough is noticeably more elastic — that\'s the gluten network forming.',
+      'Cover.'
+    ]
+  },
+  { id:'rest_3', name:'Rest', type:'wait', duration:30 },
+  { id:'fold_4', name:'Stretch & fold — 4', type:'active', duration:5,
+    instructions:[
+      'Wet your hands.',
+      'Four folds, rotating 90° between each.',
+      'Final required round. Add more if dough still feels very slack.',
+      'Cover.'
+    ]
+  },
+  { id:'bulk_rest', name:'Bulk ferment', type:'wait', duration:160, min:90, max:240,
+    note:'Done when grown 50–75%, feels pillowy, and jiggles when you shake the bowl.'
+  },
+  { id:'pre_shape', name:'Pre-shape', type:'active', duration:10,
+    instructions:[
+      'Turn the dough out onto an unfloured surface.',
+      'Fold the edges toward the center to form a rough ball.',
+      'Place seam-side-down in a clean bowl.',
+      'Cover with a damp towel.',
+      'Leave on the counter — do not refrigerate yet.'
+    ]
+  },
+  { id:'counter_rest', name:'Counter rest', type:'wait', duration:480, min:360, max:720,
+    note:'Test with a poke — it should spring back slowly.'
+  },
+  { id:'final_shape', name:'Final shape', type:'active', duration:20,
+    instructions:[
+      'Lightly flour your surface.',
+      'Turn dough out and fold the edges inward.',
+      'Flip it seam-side-down.',
+      'Pull corners outward gently and fold them in — build tension.',
+      'Flip again and look for bubbles on the underside.',
+      'Scoot the dough across the surface to tighten it into a ball.',
+      'Dust the dough with flour.',
+      'Line a bowl with a floured towel. Place dough seam-side-up.',
+      'Dust the top, cover with the towel, then plastic wrap.'
+    ]
+  },
+  { id:'cold_proof', name:'Cold proof', type:'wait', optional:true, duration:1080, min:720, max:2160,
+    note:'Refrigerate covered. 12–36 hours. Longer = more flavor.'
+  },
+  { id:'preheat', name:'Preheat oven', type:'active', duration:60,
+    instructions:[
+      'Take dough straight from the fridge — do not let it warm up.',
+      'Place your Dutch oven with lid inside the oven.',
+      'Preheat to 500°F / 260°C.',
+      'A full 60 minutes — the pot needs to be screaming hot.'
+    ]
+  },
+  { id:'score_load', name:'Score and load', type:'active', duration:5,
+    instructions:[
+      'Sprinkle flour on top of the dough.',
+      'Place parchment paper on top, then flip the whole bowl over.',
+      'Make 1–3 quick, confident cuts across the top with a sharp knife or blade.',
+      'Lift the dough by the parchment corners and lower it into the hot Dutch oven.',
+      'Put the lid on immediately.'
+    ]
+  },
+  { id:'bake_covered', name:'Bake covered', type:'wait', duration:20,
+    note:'Do not open the oven. Steam trapped inside is building your crust.'
+  },
+  { id:'bake_open', name:'Remove lid, finish baking', type:'active', duration:20,
+    instructions:[
+      'Use oven mitts — the lid is extremely hot.',
+      'Remove the lid and set it somewhere safe.',
+      'Reduce temperature to 450°F / 230°C.',
+      'Bake 20 more minutes until deep golden brown.'
+    ]
+  },
+  { id:'cool', name:'Cool before cutting', type:'wait', duration:60,
+    note:'The crumb is still setting. Cutting too soon gives a gummy, doughy inside. Wait the full hour.'
+  }
+];
+
+// ── STORAGE ──────────────────────────────────────────────────────────────────
+function saveBake(b) { localStorage.setItem('sourdough_bake', JSON.stringify(b)); }
+function loadBake()  { try { return JSON.parse(localStorage.getItem('sourdough_bake')); } catch{ return null; } }
+function clearBake() { localStorage.removeItem('sourdough_bake'); }
+
+// ── ALGORITHM ────────────────────────────────────────────────────────────────
+const TOD = { morning:600, afternoon:840, evening:1140 }; // minutes from midnight
+
+function parseSleep(startStr, endStr) {
+  const [sh,sm] = startStr.split(':').map(Number);
+  const [eh,em] = endStr.split(':').map(Number);
+  return { sh, sm, eh, em };
+}
+
+function minuteOfDay(dt) {
+  return dt.getHours()*60 + dt.getMinutes();
+}
+
+function isDuringSleep(dt, sl) {
+  const m = minuteOfDay(dt);
+  const s = sl.sh*60+sl.sm, e = sl.eh*60+sl.em;
+  return s > e ? (m >= s || m < e) : (m >= s && m < e);
+}
+
+function stepConflicts(step, sl) {
+  if (step.type !== 'active') return false;
+  // Check start, end, and every 5 min in between
+  const start = new Date(step.startTime);
+  const end   = new Date(step.endTime);
+  const check = new Date(start);
+  while (check <= end) {
+    if (isDuringSleep(check, sl)) return true;
+    check.setMinutes(check.getMinutes()+5);
+  }
+  return false;
+}
+
+function buildSchedule(targetTime, opts, useColdProof) {
+  const steps = [];
+  let cursor = new Date(targetTime);
+  const rev = [...RECIPE].reverse();
+  for (const def of rev) {
+    if (def.id === 'cold_proof' && !useColdProof) continue;
+    let dur = def.duration;
+    if (def.id === 'starter_peak') dur = opts.sp;
+    if (def.id === 'bulk_rest')    dur = opts.br;
+    if (def.id === 'counter_rest') dur = opts.cr;
+    if (def.id === 'cold_proof')   dur = opts.cp;
+    const end   = new Date(cursor);
+    const start = new Date(cursor.getTime() - dur*60000);
+    steps.unshift({...def, startTime:start.toISOString(), endTime:end.toISOString(), duration:dur, completed:false});
+    cursor = start;
+  }
+  return steps;
+}
+
+function findSchedule(dayStr, tod, sleepStart, sleepEnd, coldProof) {
+  const todMins = TOD[tod] || TOD.afternoon;
+  const [y,mo,d] = dayStr.split('-').map(Number);
+  const target = new Date(y, mo-1, d, Math.floor(todMins/60), todMins%60, 0, 0);
+  const sl = parseSleep(sleepStart, sleepEnd);
+
+  // Search order: preferred defaults first, then expand range
+  const spOpts = [480,360,600,240,720];
+  const brOpts = [160,120,200,90,240];
+  const crOpts = [480,420,540,360,600,660,720];
+  const cpOpts = coldProof ? [1080,720,1440,900,1800,2160] : [0];
+
+  for (const cp of cpOpts)
+  for (const cr of crOpts)
+  for (const sp of spOpts)
+  for (const br of brOpts) {
+    const sched = buildSchedule(target, {sp,br,cr,cp}, coldProof);
+    if (sched.every(s => !stepConflicts(s, sl))) {
+      return { schedule:sched, targetTime:target.toISOString() };
+    }
+  }
+  return null;
+}
+
+// ── FORMATTING ───────────────────────────────────────────────────────────────
+function fmt(dt, opts) { return new Date(dt).toLocaleString('en-US', opts); }
+function fmtDate(dt)   { return fmt(dt,{weekday:'long',month:'short',day:'numeric'}); }
+function fmtTime(dt)   { return fmt(dt,{hour:'numeric',minute:'2-digit',hour12:true}); }
+function fmtShort(dt)  { return fmt(dt,{weekday:'short',hour:'numeric',minute:'2-digit',hour12:true}); }
+function fmtDur(m)     { const h=Math.floor(m/60),r=m%60; return h && r ? `${h}h ${r}m` : h ? `${h}h` : `${r}m`; }
+function fmtCountdown(dt) {
+  const diff = new Date(dt) - Date.now();
+  if (diff <= 0) return 'now';
+  const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
+  return h ? `in ${h}h ${m>0?m+'m':''}`.trim() : `in ${m}m`;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let formState = { day: null, tod: 'afternoon', sleepStart: '23:00', sleepEnd: '07:00', coldProof: false };
+let pendingSchedule = null;
+let notifTimers = [];
+let stepChecked = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById('screen-'+id).classList.remove('hidden');
+}
+
+// ── SCHEDULING FORM ───────────────────────────────────────────────────────────
+function buildDayChips() {
+  const c = document.getElementById('day-chips');
+  c.innerHTML = '';
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(); d.setDate(d.getDate()+i); d.setHours(0,0,0,0);
+    const btn = document.createElement('button');
+    btn.className = 'chip day-chip' + (i===2?' selected':'');
+    btn.dataset.iso = d.toISOString().slice(0,10);
+    btn.innerHTML = `<span class="day-name">${days[d.getDay()]}</span><span class="day-date">${d.getMonth()+1}/${d.getDate()}</span>`;
+    btn.onclick = () => {
+      c.querySelectorAll('.chip').forEach(x=>x.classList.remove('selected'));
+      btn.classList.add('selected');
+      formState.day = btn.dataset.iso;
+    };
+    if (i===2) formState.day = btn.dataset.iso;
+    c.appendChild(btn);
+  }
+}
+
+function selectTOD(btn) {
+  btn.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.remove('selected'));
+  btn.classList.add('selected');
+  formState.tod = btn.dataset.tod;
+}
+
+function toggleColdProof() {
+  formState.coldProof = !formState.coldProof;
+  document.getElementById('cold-proof-toggle').classList.toggle('on', formState.coldProof);
+}
+
+function connectCalendar() {
+  alert('Google Calendar integration is coming in a future update. For now, use the "Add to Calendar" button after planning your bake to import all steps at once.');
+}
+
+function planBake() {
+  const errEl = document.getElementById('schedule-error');
+  errEl.style.display = 'none';
+  const ss = document.getElementById('sleep-start').value || '23:00';
+  const se = document.getElementById('sleep-end').value || '07:00';
+  const result = findSchedule(formState.day, formState.tod, ss, se, formState.coldProof);
+  if (!result) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'No conflict-free schedule found for that day and sleep window. Try a different day or adjust your target time.';
+    return;
+  }
+  pendingSchedule = result;
+  renderPreview(result.schedule, result.targetTime);
+  showScreen('preview');
+}
+
+// ── PREVIEW ───────────────────────────────────────────────────────────────────
+function renderPreview(schedule, targetTime) {
+  const first = schedule[0];
+  const activeMins = schedule.filter(s=>s.type==='active').reduce((a,s)=>a+s.duration,0);
+  const totalMins  = Math.round((new Date(targetTime)-new Date(first.startTime))/60000);
+
+  document.getElementById('preview-card').innerHTML = `
+    <div class="ac-label">Fresh bread ready</div>
+    <div class="ac-value">${fmtDate(targetTime)}</div>
+    <div class="ac-sub">Start feeding your starter ${fmtShort(first.startTime)}</div>`;
+
+  document.getElementById('preview-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total span</div><div class="stat-value">${fmtDur(totalMins)}</div></div>
+    <div class="stat-card"><div class="stat-label">Hands-on time</div><div class="stat-value">${fmtDur(activeMins)}</div></div>`;
+
+  document.getElementById('preview-timeline').innerHTML = renderTimeline(schedule, false);
+}
+
+// ── CONFIRM ───────────────────────────────────────────────────────────────────
+async function confirmBake() {
+  if (!pendingSchedule) return;
+  saveBake({ schedule: pendingSchedule.schedule, confirmedAt: Date.now() });
+  await requestNotifications(pendingSchedule.schedule);
+  renderScheduleScreen();
+  showScreen('schedule');
+}
+
+// ── SCHEDULE SCREEN ───────────────────────────────────────────────────────────
+function renderScheduleScreen() {
+  const bake = loadBake();
+  if (!bake) return;
+  const { schedule } = bake;
+  const now = new Date();
+
+  // Next active step not yet completed
+  const nextActive = schedule.find(s => s.type==='active' && !s.completed && new Date(s.startTime) > now);
+  const currentStep = schedule.find(s => s.type==='active' && !s.completed && now >= new Date(s.startTime) && now <= new Date(s.endTime));
+  const allDone = schedule.filter(s=>s.type==='active').every(s=>s.completed);
+
+  const nextEl = document.getElementById('next-area');
+  if (allDone) {
+    nextEl.innerHTML = `<div class="done-card"><div class="done-icon"><i class="ti ti-bread"></i></div><div class="done-label">Your bread is ready.</div><div class="done-sub">Let it cool a full hour before cutting — the crumb is still setting.</div></div>`;
+  } else if (currentStep) {
+    nextEl.innerHTML = `<div class="next-card" onclick="goToCurrentStep()">
+      <div class="nc-label">Active now — tap to open</div>
+      <div class="nc-step">${currentStep.name}</div>
+      <div class="nc-when">${fmtTime(currentStep.startTime)} · ${fmtDur(currentStep.duration)}</div>
+    </div>`;
+  } else if (nextActive) {
+    nextEl.innerHTML = `<div class="next-card" onclick="showScreen('schedule')">
+      <div class="nc-label">Next step — ${fmtCountdown(nextActive.startTime)}</div>
+      <div class="nc-step">${nextActive.name}</div>
+      <div class="nc-when">${fmtShort(nextActive.startTime)}</div>
+    </div>`;
+  } else {
+    nextEl.innerHTML = `<div class="waiting-card"><div class="waiting-label">Nothing to do right now.</div><div class="waiting-sub">Check back for your next step.</div></div>`;
+  }
+
+  document.getElementById('schedule-timeline').innerHTML = renderTimeline(schedule, true);
+}
+
+// ── TIMELINE RENDERER ─────────────────────────────────────────────────────────
+function renderTimeline(schedule, showStatus) {
+  const groups = {};
+  const order  = [];
+  schedule.forEach(s => {
+    const key = new Date(s.startTime).toDateString();
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(s);
+  });
+
+  return order.map(key => {
+    const steps = groups[key];
+    const date  = new Date(steps[0].startTime);
+    const rows  = steps.map(s => {
+      const now   = new Date();
+      const isCur = showStatus && s.type==='active' && !s.completed && now >= new Date(s.startTime) && now <= new Date(s.endTime);
+      const isDone= showStatus && s.completed;
+      const dotCls= isDone ? 'done' : isCur ? 'now' : s.type==='active' ? 'active' : 'wait';
+      const nameCls= isDone ? 'faded' : s.type==='wait' ? 'muted' : '';
+      return `<div class="tl-row">
+        <div class="tl-dot-col"><div class="tl-dot ${dotCls}"></div></div>
+        <div class="tl-body">
+          <div class="tl-time">${fmtTime(s.startTime)}</div>
+          <div class="tl-name ${nameCls}">${s.name}</div>
+          <div class="tl-dur">${fmtDur(s.duration)}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="day-group"><div class="day-header">${fmtDate(date)}</div>${rows}</div>`;
+  }).join('');
+}
+
+// ── STEP SCREEN ───────────────────────────────────────────────────────────────
+function goToCurrentStep() {
+  const bake = loadBake();
+  if (!bake) return;
+  const now  = new Date();
+  const step = bake.schedule.find(s =>
+    s.type==='active' && !s.completed &&
+    now >= new Date(s.startTime) && now <= new Date(s.endTime)
+  );
+  if (step) renderStepScreen(step, bake.schedule);
+}
+
+function renderStepScreen(step, schedule) {
+  stepChecked = false;
+  const activeSteps = schedule.filter(s=>s.type==='active');
+  const idx = activeSteps.findIndex(s=>s.id===step.id);
+
+  document.getElementById('step-counter').textContent = `${idx+1} of ${activeSteps.length}`;
+  document.getElementById('step-title').textContent   = step.name;
+  document.getElementById('step-duration').textContent = `About ${fmtDur(step.duration)}`;
+
+  const instrHTML = (step.instructions||[]).map((t,i) =>
+    `<div class="inst-row"><div class="inst-num">${i+1}</div><div class="inst-text">${t}</div></div>`
+  ).join('');
+  document.getElementById('step-instructions').innerHTML = instrHTML;
+
+  const check = document.getElementById('step-check');
+  const btn   = document.getElementById('done-btn');
+  check.classList.remove('checked');
+  btn.disabled = true;
+
+  showScreen('step');
+}
+
+function toggleCheck() {
+  stepChecked = !stepChecked;
+  document.getElementById('step-check').classList.toggle('checked', stepChecked);
+  document.getElementById('done-btn').disabled = !stepChecked;
+}
+
+function completeStep() {
+  if (!stepChecked) return;
+  const bake = loadBake();
+  if (!bake) return;
+  const now  = new Date();
+  const step = bake.schedule.find(s =>
+    s.type==='active' && !s.completed &&
+    now >= new Date(s.startTime) && now <= new Date(s.endTime)
+  );
+  if (!step) { showScreen('schedule'); return; }
+
+  step.completed = true;
+  saveBake(bake);
+  renderScheduleScreen();
+  showScreen('schedule');
+}
+
+// ── CANCEL ────────────────────────────────────────────────────────────────────
+function cancelBake() {
+  if (!confirm('Cancel this bake and start over?')) return;
+  notifTimers.forEach(clearTimeout);
+  notifTimers = [];
+  clearBake();
+  buildDayChips();
+  showScreen('scheduling');
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+async function requestNotifications(schedule) {
+  if (!('Notification' in window)) return;
+  const perm = Notification.permission === 'granted'
+    ? 'granted'
+    : await Notification.requestPermission();
+  if (perm !== 'granted') return;
+
+  notifTimers.forEach(clearTimeout);
+  notifTimers = [];
+  const now = Date.now();
+
+  schedule.filter(s=>s.type==='active').forEach(step => {
+    const delay = new Date(step.startTime).getTime() - now;
+    if (delay > 0) {
+      const t = setTimeout(() => {
+        new Notification(`Sourdough — ${step.name}`, {
+          body: step.instructions ? step.instructions[0] : 'Time for your next step.',
+          icon: '/icon-192.png',
+          tag:  step.id,
+        });
+      }, delay);
+      notifTimers.push(t);
+    }
+  });
+}
+
+// ── ICS ───────────────────────────────────────────────────────────────────────
+function handleICS() {
+  const bake = loadBake();
+  if (!bake) return;
+  const p  = n => String(n).padStart(2,'0');
+  const dt = d => { const x=new Date(d); return `${x.getFullYear()}${p(x.getMonth()+1)}${p(x.getDate())}T${p(x.getHours())}${p(x.getMinutes())}00`; };
+
+  const events = bake.schedule
+    .filter(s=>s.type==='active')
+    .map(s => [
+      'BEGIN:VEVENT',
+      `DTSTART:${dt(s.startTime)}`,
+      `DTEND:${dt(s.endTime)}`,
+      `SUMMARY:Sourdough — ${s.name}`,
+      s.instructions ? `DESCRIPTION:${s.instructions.join('\\n')}` : '',
+      `UID:sourdough-${s.id}-${new Date(s.startTime).getTime()}@scheduler`,
+      'END:VEVENT'
+    ].filter(Boolean).join('\r\n')).join('\r\n');
+
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Sourdough Scheduler//EN','CALSCALE:GREGORIAN',events,'END:VCALENDAR'].join('\r\n');
+  const url = URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'}));
+  const a   = Object.assign(document.createElement('a'),{href:url,download:'sourdough-bake.ics'});
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── ACTIVE STEP WATCHER ───────────────────────────────────────────────────────
+function watchForActiveStep() {
+  const bake = loadBake();
+  if (!bake) return;
+  const now  = new Date();
+  const step = bake.schedule.find(s =>
+    s.type==='active' && !s.completed &&
+    now >= new Date(s.startTime) && now <= new Date(s.endTime)
+  );
+  const stepScreen = document.getElementById('screen-step');
+  if (step && stepScreen.classList.contains('hidden')) {
+    renderStepScreen(step, bake.schedule);
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+
+  buildDayChips();
+
+  const bake = loadBake();
+  if (!bake) {
+    showScreen('scheduling');
+    return;
+  }
+
+  const now  = new Date();
+  const step = bake.schedule.find(s =>
+    s.type==='active' && !s.completed &&
+    now >= new Date(s.startTime) && now <= new Date(s.endTime)
+  );
+
+  if (step) {
+    renderStepScreen(step, bake.schedule);
+  } else {
+    renderScheduleScreen();
+    showScreen('schedule');
+  }
+
+  setInterval(() => { watchForActiveStep(); }, 30000);
+  setInterval(() => {
+    if (!document.getElementById('screen-schedule').classList.contains('hidden')) {
+      renderScheduleScreen();
+    }
+  }, 60000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
