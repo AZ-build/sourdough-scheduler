@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Sourdough">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/SDscheduler-transparent.PNG">
 <title>Sourdough Scheduler</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
@@ -181,18 +182,26 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
     <div class="field">
       <div class="field-label">Time of day</div>
       <div class="chips">
-        <button class="chip" data-tod="morning" onclick="selectTOD(this)">Morning</button>
-        <button class="chip selected" data-tod="afternoon" onclick="selectTOD(this)">Afternoon</button>
-        <button class="chip" data-tod="evening" onclick="selectTOD(this)">Evening</button>
+        <button class="chip" data-tod="morning" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Morning</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~11am</span></button>
+        <button class="chip selected" data-tod="afternoon" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Afternoon</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~2pm</span></button>
+        <button class="chip" data-tod="evening" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Evening</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~7pm</span></button>
       </div>
     </div>
 
     <div class="field">
-      <div class="field-label">Your sleep window</div>
+      <div class="field-label">Sleep window</div>
       <div class="time-row">
         <input type="time" class="time-input" id="sleep-start" value="23:00">
         <div class="time-div">to</div>
         <input type="time" class="time-input" id="sleep-end" value="07:00">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Wake time on bake days</div>
+      <div class="time-row">
+        <input type="time" class="time-input" id="wake-time" value="07:00" style="max-width:160px">
+        <div class="time-div" style="font-size:12px;flex:1">Used to find the earliest morning step</div>
       </div>
     </div>
 
@@ -416,7 +425,7 @@ function loadBake()  { try { return JSON.parse(localStorage.getItem('sourdough_b
 function clearBake() { localStorage.removeItem('sourdough_bake'); }
 
 // ── ALGORITHM ────────────────────────────────────────────────────────────────
-const TOD = { morning:600, afternoon:840, evening:1140 }; // minutes from midnight
+const TOD = { morning:660, afternoon:840, evening:1140 }; // 11am / 2pm / 7pm
 
 function parseSleep(startStr, endStr) {
   const [sh,sm] = startStr.split(':').map(Number);
@@ -434,16 +443,23 @@ function isDuringSleep(dt, sl) {
   return s > e ? (m >= s || m < e) : (m >= s && m < e);
 }
 
-function stepConflicts(step, sl) {
+function stepConflicts(step, sl, wakeH, wakeM) {
   if (step.type !== 'active') return false;
-  // Check start, end, and every 5 min in between
   const start = new Date(step.startTime);
   const end   = new Date(step.endTime);
+  // Check every 5 min within the step against sleep window
   const check = new Date(start);
   while (check <= end) {
     if (isDuringSleep(check, sl)) return true;
     check.setMinutes(check.getMinutes()+5);
   }
+  // Also check against wake time floor: active step can't start before wake time
+  const stepMins  = minuteOfDay(start);
+  const wakeMins  = wakeH*60 + wakeM;
+  const sleepMins = sl.sh*60 + sl.sm;
+  // Only apply wake floor if step is after midnight and before sleep start
+  // (i.e. in the morning window, not late evening)
+  if (stepMins < wakeMins && stepMins < sleepMins) return true;
   return false;
 }
 
@@ -466,14 +482,15 @@ function buildSchedule(targetTime, opts, useColdProof) {
   return steps;
 }
 
-function findSchedule(dayStr, tod, sleepStart, sleepEnd, coldProof) {
+function findSchedule(dayStr, tod, sleepStart, sleepEnd, wakeTime, coldProof) {
   const todMins = TOD[tod] || TOD.afternoon;
   const [y,mo,d] = dayStr.split('-').map(Number);
   const target = new Date(y, mo-1, d, Math.floor(todMins/60), todMins%60, 0, 0);
   const sl = parseSleep(sleepStart, sleepEnd);
+  const [wh, wm] = (wakeTime||'07:00').split(':').map(Number);
 
   // Search order: preferred defaults first, then expand range
-  const spOpts = [480,360,600,240,720];
+  const spOpts = [480,360,600,720,240];      // 8h, 6h, 10h, 12h, 4h
   const brOpts = [160,120,200,90,240];
   const crOpts = [480,420,540,360,600,660,720];
   const cpOpts = coldProof ? [1080,720,1440,900,1800,2160] : [0];
@@ -483,7 +500,7 @@ function findSchedule(dayStr, tod, sleepStart, sleepEnd, coldProof) {
   for (const sp of spOpts)
   for (const br of brOpts) {
     const sched = buildSchedule(target, {sp,br,cr,cp}, coldProof);
-    if (sched.every(s => !stepConflicts(s, sl))) {
+    if (sched.every(s => !stepConflicts(s, sl, wh, wm))) {
       return { schedule:sched, targetTime:target.toISOString() };
     }
   }
@@ -555,10 +572,16 @@ function planBake() {
   errEl.style.display = 'none';
   const ss = document.getElementById('sleep-start').value || '23:00';
   const se = document.getElementById('sleep-end').value || '07:00';
-  const result = findSchedule(formState.day, formState.tod, ss, se, formState.coldProof);
+  const wt = document.getElementById('wake-time').value || '07:00';
+  const result = findSchedule(formState.day, formState.tod, ss, se, wt, formState.coldProof);
   if (!result) {
     errEl.style.display = 'block';
-    errEl.textContent = 'No conflict-free schedule found for that day and sleep window. Try a different day or adjust your target time.';
+    const tod = formState.tod;
+    if (tod === 'morning') {
+      errEl.textContent = 'Can\'t fit a morning bake around your sleep window. Try adjusting your wake time, or switch to Afternoon.';
+    } else {
+      errEl.textContent = 'No conflict-free schedule found for that day. Try a different day or time of day.';
+    }
     return;
   }
   pendingSchedule = result;
