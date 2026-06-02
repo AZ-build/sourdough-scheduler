@@ -161,6 +161,11 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
 /* ── NO BAKE MSG ─────────────────────── */
 .info-note{background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--t2);line-height:1.55;margin-bottom:20px}
 .error-note{background:rgba(220,38,38,0.08);border:0.5px solid rgba(220,38,38,0.2);border-radius:var(--r);padding:14px 16px;font-size:14px;color:#FCA5A5;line-height:1.55;margin-bottom:20px;display:none}
+
+/* ── MODE TOGGLE ─────────────────────── */
+.mode-toggle{display:flex;background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:4px;gap:4px;margin-bottom:28px}
+.mode-btn{flex:1;padding:10px;background:none;border:none;border-radius:calc(var(--r) - 2px);color:var(--t2);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.15s,color 0.15s}
+.mode-btn.active{background:var(--s3);color:var(--t1)}
 </style>
 </head>
 <body>
@@ -172,19 +177,31 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
     <div class="wordmark">Sourdough</div>
   </div>
   <div class="content">
-    <h1 class="screen-title">When do you want fresh bread?</h1>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-btn-done" onclick="switchMode('done')">Done time</button>
+      <button class="mode-btn" id="mode-btn-start" onclick="switchMode('start')">Start time</button>
+    </div>
+    <h1 class="screen-title" id="schedule-title">When do you want fresh bread?</h1>
 
     <div class="field">
       <div class="field-label">Day</div>
       <div class="chips-scroll" id="day-chips"></div>
     </div>
 
-    <div class="field">
+    <div class="field" id="tod-field">
       <div class="field-label">Time of day</div>
       <div class="chips">
         <button class="chip" data-tod="morning" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Morning</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~11am</span></button>
         <button class="chip selected" data-tod="afternoon" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Afternoon</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~2pm</span></button>
         <button class="chip" data-tod="evening" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Evening</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~7pm</span></button>
+      </div>
+    </div>
+
+    <div class="field" id="start-time-field" style="display:none">
+      <div class="field-label">Start time</div>
+      <div class="time-row">
+        <input type="time" class="time-input" id="start-time-input" value="09:00">
+        <button onclick="setNow()" style="padding:12px 20px;background:var(--s2);border:0.5px solid var(--b2);border-radius:var(--r);color:var(--t1);font-size:14px;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0">Now</button>
       </div>
     </div>
 
@@ -507,6 +524,46 @@ function findSchedule(dayStr, tod, sleepStart, sleepEnd, wakeTime, coldProof) {
   return null;
 }
 
+function buildScheduleForward(startTime, opts, useColdProof) {
+  const steps = [];
+  let cursor = new Date(startTime);
+  for (const def of RECIPE) {
+    if (def.id === 'cold_proof' && !useColdProof) continue;
+    let dur = def.duration;
+    if (def.id === 'starter_peak') dur = opts.sp;
+    if (def.id === 'bulk_rest')    dur = opts.br;
+    if (def.id === 'counter_rest') dur = opts.cr;
+    if (def.id === 'cold_proof')   dur = opts.cp;
+    const start = new Date(cursor);
+    const end   = new Date(cursor.getTime() + dur*60000);
+    steps.push({...def, startTime:start.toISOString(), endTime:end.toISOString(), duration:dur, completed:false});
+    cursor = end;
+  }
+  return steps;
+}
+
+function findScheduleForward(startTime, sleepStart, sleepEnd, wakeTime, coldProof) {
+  const sl = parseSleep(sleepStart, sleepEnd);
+  const [wh, wm] = (wakeTime||'07:00').split(':').map(Number);
+
+  const spOpts = [480,360,600,720,240];
+  const brOpts = [160,120,200,90,240];
+  const crOpts = [480,420,540,360,600,660,720];
+  const cpOpts = coldProof ? [1080,720,1440,900,1800,2160] : [0];
+
+  for (const cp of cpOpts)
+  for (const cr of crOpts)
+  for (const sp of spOpts)
+  for (const br of brOpts) {
+    const sched = buildScheduleForward(startTime, {sp,br,cr,cp}, coldProof);
+    if (sched.every(s => !stepConflicts(s, sl, wh, wm))) {
+      const targetTime = sched[sched.length-1].endTime;
+      return { schedule:sched, targetTime };
+    }
+  }
+  return null;
+}
+
 // ── FORMATTING ───────────────────────────────────────────────────────────────
 function fmt(dt, opts) { return new Date(dt).toLocaleString('en-US', opts); }
 function fmtDate(dt)   { return fmt(dt,{weekday:'long',month:'short',day:'numeric'}); }
@@ -521,7 +578,7 @@ function fmtCountdown(dt) {
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let formState = { day: null, tod: 'afternoon', sleepStart: '23:00', sleepEnd: '07:00', coldProof: false };
+let formState = { day: null, tod: 'afternoon', sleepStart: '23:00', sleepEnd: '07:00', coldProof: false, planMode: 'done' };
 let pendingSchedule = null;
 let notifTimers = [];
 let stepChecked = false;
@@ -532,14 +589,16 @@ function showScreen(id) {
 }
 
 // ── SCHEDULING FORM ───────────────────────────────────────────────────────────
-function buildDayChips() {
+function buildDayChips(includeToday) {
   const c = document.getElementById('day-chips');
   c.innerHTML = '';
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  for (let i = 1; i <= 7; i++) {
+  const startI   = includeToday ? 0 : 1;
+  const defaultI = includeToday ? 0 : 2;
+  for (let i = startI; i <= startI + 6; i++) {
     const d = new Date(); d.setDate(d.getDate()+i); d.setHours(0,0,0,0);
     const btn = document.createElement('button');
-    btn.className = 'chip day-chip' + (i===2?' selected':'');
+    btn.className = 'chip day-chip' + (i===defaultI?' selected':'');
     btn.dataset.iso = d.toISOString().slice(0,10);
     btn.innerHTML = `<span class="day-name">${days[d.getDay()]}</span><span class="day-date">${d.getMonth()+1}/${d.getDate()}</span>`;
     btn.onclick = () => {
@@ -547,9 +606,35 @@ function buildDayChips() {
       btn.classList.add('selected');
       formState.day = btn.dataset.iso;
     };
-    if (i===2) formState.day = btn.dataset.iso;
+    if (i===defaultI) formState.day = btn.dataset.iso;
     c.appendChild(btn);
   }
+}
+
+function switchMode(mode) {
+  formState.planMode = mode;
+  document.getElementById('mode-btn-done').classList.toggle('active', mode==='done');
+  document.getElementById('mode-btn-start').classList.toggle('active', mode==='start');
+  document.getElementById('schedule-title').textContent = mode==='done'
+    ? 'When do you want fresh bread?'
+    : 'When are you starting?';
+  document.getElementById('tod-field').style.display        = mode==='done' ? '' : 'none';
+  document.getElementById('start-time-field').style.display = mode==='start' ? '' : 'none';
+  buildDayChips(mode==='start');
+}
+
+function setNow() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('start-time-input').value = `${h}:${m}`;
+  const iso = now.toISOString().slice(0,10);
+  const c = document.getElementById('day-chips');
+  c.querySelectorAll('.chip').forEach(x => {
+    const match = x.dataset.iso === iso;
+    x.classList.toggle('selected', match);
+    if (match) formState.day = iso;
+  });
 }
 
 function selectTOD(btn) {
@@ -573,32 +658,55 @@ function planBake() {
   const ss = document.getElementById('sleep-start').value || '23:00';
   const se = document.getElementById('sleep-end').value || '07:00';
   const wt = document.getElementById('wake-time').value || '07:00';
-  const result = findSchedule(formState.day, formState.tod, ss, se, wt, formState.coldProof);
-  if (!result) {
-    errEl.style.display = 'block';
-    const tod = formState.tod;
-    if (tod === 'morning') {
-      errEl.textContent = 'Can\'t fit a morning bake around your sleep window. Try adjusting your wake time, or switch to Afternoon.';
-    } else {
-      errEl.textContent = 'No conflict-free schedule found for that day. Try a different day or time of day.';
+
+  let result;
+  if (formState.planMode === 'start') {
+    const timeVal = document.getElementById('start-time-input').value || '09:00';
+    const [sh, sm] = timeVal.split(':').map(Number);
+    const [y, mo, d] = formState.day.split('-').map(Number);
+    const startTime = new Date(y, mo-1, d, sh, sm, 0, 0);
+    result = findScheduleForward(startTime, ss, se, wt, formState.coldProof);
+    if (!result) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'No conflict-free schedule found starting at that time. Try a different start time or adjust your sleep window.';
+      return;
     }
-    return;
+  } else {
+    result = findSchedule(formState.day, formState.tod, ss, se, wt, formState.coldProof);
+    if (!result) {
+      errEl.style.display = 'block';
+      const tod = formState.tod;
+      if (tod === 'morning') {
+        errEl.textContent = 'Can\'t fit a morning bake around your sleep window. Try adjusting your wake time, or switch to Afternoon.';
+      } else {
+        errEl.textContent = 'No conflict-free schedule found for that day. Try a different day or time of day.';
+      }
+      return;
+    }
   }
+
   pendingSchedule = result;
-  renderPreview(result.schedule, result.targetTime);
+  renderPreview(result.schedule, result.targetTime, formState.planMode);
   showScreen('preview');
 }
 
 // ── PREVIEW ───────────────────────────────────────────────────────────────────
-function renderPreview(schedule, targetTime) {
+function renderPreview(schedule, targetTime, mode) {
   const first = schedule[0];
   const activeMins = schedule.filter(s=>s.type==='active').reduce((a,s)=>a+s.duration,0);
   const totalMins  = Math.round((new Date(targetTime)-new Date(first.startTime))/60000);
 
-  document.getElementById('preview-card').innerHTML = `
-    <div class="ac-label">Fresh bread ready</div>
-    <div class="ac-value">${fmtDate(targetTime)}</div>
-    <div class="ac-sub">Start feeding your starter ${fmtShort(first.startTime)}</div>`;
+  if (mode === 'start') {
+    document.getElementById('preview-card').innerHTML = `
+      <div class="ac-label">Bake starting</div>
+      <div class="ac-value">${fmtDate(first.startTime)}</div>
+      <div class="ac-sub">Feed starter ${fmtTime(first.startTime)} · Bread ready ${fmtShort(targetTime)}</div>`;
+  } else {
+    document.getElementById('preview-card').innerHTML = `
+      <div class="ac-label">Fresh bread ready</div>
+      <div class="ac-value">${fmtDate(targetTime)}</div>
+      <div class="ac-sub">Start feeding your starter ${fmtShort(first.startTime)}</div>`;
+  }
 
   document.getElementById('preview-stats').innerHTML = `
     <div class="stat-card"><div class="stat-label">Total span</div><div class="stat-value">${fmtDur(totalMins)}</div></div>
@@ -745,7 +853,7 @@ function cancelBake() {
   notifTimers.forEach(clearTimeout);
   notifTimers = [];
   clearBake();
-  buildDayChips();
+  buildDayChips(formState.planMode === 'start');
   showScreen('scheduling');
 }
 
@@ -823,7 +931,7 @@ async function init() {
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   }
 
-  buildDayChips();
+  buildDayChips(false);
 
   const bake = loadBake();
   if (!bake) {
