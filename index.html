@@ -142,21 +142,27 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
 .ics-arrow{font-size:14px;color:var(--t3)}
 
 /* ── STEP SCREEN ─────────────────────── */
-.step-tag{display:inline-block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.6px;background:var(--accent-t);color:var(--accent-hi);padding:4px 10px;border-radius:20px;margin-bottom:20px}
+.step-tag{display:inline-block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.6px;background:var(--accent-t);color:var(--accent-hi);padding:4px 10px;border-radius:20px;margin-bottom:12px}
 .step-counter{font-size:12px;color:var(--t3);float:right;margin-top:4px}
-.step-title{font-size:30px;font-weight:500;line-height:1.15;margin-bottom:8px}
-.step-duration{font-size:14px;color:var(--t2);margin-bottom:32px}
-.instructions{display:flex;flex-direction:column;gap:14px;margin-bottom:36px}
-.inst-row{display:flex;gap:14px;align-items:flex-start}
-.inst-num{width:26px;height:26px;border-radius:50%;background:var(--s2);border:0.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--t2);flex-shrink:0;margin-top:2px}
-.inst-text{font-size:17px;color:var(--t1);line-height:1.55;flex:1}
+.step-timing{margin-bottom:20px}
+.timing-badge{display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;letter-spacing:0.3px}
+.timing-on{background:rgba(34,197,94,0.15);color:#4ADE80}
+.timing-early{background:rgba(59,130,246,0.15);color:#60A5FA}
+.timing-late{background:rgba(239,68,68,0.15);color:#F87171}
+.step-title{font-size:32px;font-weight:500;line-height:1.15;margin-bottom:8px}
+.step-duration{font-size:14px;color:var(--t2);margin-bottom:28px}
+.wait-note{background:var(--s1);border-left:3px solid var(--accent);border-radius:var(--r);padding:20px;margin-bottom:32px;font-size:18px;color:var(--t2);line-height:1.65}
+.instructions{display:flex;flex-direction:column;gap:16px;margin-bottom:36px}
+.inst-row{display:flex;gap:16px;align-items:flex-start}
+.inst-num{width:30px;height:30px;border-radius:50%;background:var(--s2);border:0.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--t2);flex-shrink:0;margin-top:3px}
+.inst-text{font-size:19px;color:var(--t1);line-height:1.6;flex:1}
 .complete-area{border-top:0.5px solid var(--b1);padding-top:24px}
 .check-row{display:flex;align-items:center;gap:14px;margin-bottom:18px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.check-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s}
+.check-circle{width:32px;height:32px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s}
 .check-circle.checked{background:var(--accent);border-color:var(--accent)}
-.check-circle i{font-size:15px;color:var(--bg);opacity:0;transition:opacity 0.15s}
+.check-circle i{font-size:17px;color:var(--bg);opacity:0;transition:opacity 0.15s}
 .check-circle.checked i{opacity:1}
-.check-label{font-size:16px;color:var(--t1)}
+.check-label{font-size:17px;color:var(--t1)}
 
 /* ── NO BAKE MSG ─────────────────────── */
 .info-note{background:var(--s1);border:0.5px solid var(--b1);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--t2);line-height:1.55;margin-bottom:20px}
@@ -188,12 +194,22 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
       <div class="chips-scroll" id="day-chips"></div>
     </div>
 
+    <div class="field">
+      <div class="field-label">Loaves</div>
+      <div class="chips">
+        <button class="chip selected" data-loaves="1" onclick="selectLoaves(this)">1 loaf</button>
+        <button class="chip" data-loaves="2" onclick="selectLoaves(this)">2 loaves</button>
+        <button class="chip" data-loaves="3" onclick="selectLoaves(this)">3 loaves</button>
+      </div>
+    </div>
+
     <div class="field" id="tod-field">
       <div class="field-label">Time of day</div>
       <div class="chips">
         <button class="chip" data-tod="morning" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Morning</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~11am</span></button>
         <button class="chip selected" data-tod="afternoon" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Afternoon</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~2pm</span></button>
         <button class="chip" data-tod="evening" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Evening</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">~7pm</span></button>
+        <button class="chip" data-tod="anytime" onclick="selectTOD(this)"><span style="display:block;font-size:13px">Anytime</span><span style="display:block;font-size:11px;opacity:0.6;margin-top:2px">first fit</span></button>
       </div>
     </div>
 
@@ -211,14 +227,6 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
         <input type="time" class="time-input" id="sleep-start" value="23:00">
         <div class="time-div">to</div>
         <input type="time" class="time-input" id="sleep-end" value="07:00">
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="field-label">Wake time on bake days</div>
-      <div class="time-row">
-        <input type="time" class="time-input" id="wake-time" value="07:00" style="max-width:160px">
-        <div class="time-div" style="font-size:12px;flex:1">Used to find the earliest morning step</div>
       </div>
     </div>
 
@@ -293,16 +301,18 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
     <span class="step-counter" id="step-counter"></span>
   </div>
   <div class="content">
-    <div class="step-tag">Active now</div>
+    <div class="step-tag" id="step-tag">Active now</div>
+    <div class="step-timing" id="step-timing"></div>
     <h1 class="step-title" id="step-title"></h1>
     <div class="step-duration" id="step-duration"></div>
+    <div class="wait-note" id="step-wait-note" style="display:none"></div>
     <div class="instructions" id="step-instructions"></div>
-    <div class="complete-area">
+    <div class="complete-area" id="step-complete-area">
       <div class="check-row" onclick="toggleCheck()">
         <div class="check-circle" id="step-check"><i class="ti ti-check"></i></div>
         <span class="check-label">Mark this step complete</span>
       </div>
-      <button class="btn-primary" id="done-btn" onclick="completeStep()" disabled>Done</button>
+      <button class="btn-primary" id="done-btn" onclick="completeStep()" disabled>Done — next step</button>
     </div>
   </div>
 </div>
@@ -310,131 +320,165 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
 </div><!-- #app -->
 <script>
 // ── RECIPE ───────────────────────────────────────────────────────────────────
-const RECIPE = [
-  { id:'feed_starter', name:'Feed your starter', type:'active', duration:10,
-    instructions:[
-      'Take your starter out of the fridge.',
-      'Discard down to 50g of starter.',
-      'Add 50g flour and 50g lukewarm water.',
-      'Mix thoroughly until no dry flour remains.',
-      'Cover loosely — not airtight.'
-    ],
-    note:'Use at peak: doubled in size, very bubbly, domed on top.'
-  },
-  { id:'starter_peak', name:'Starter peaks', type:'wait', duration:480, min:240, max:720,
-    note:'Warmer room = faster. Use at peak — doubled, very bubbly, domed on top.'
-  },
-  { id:'mix', name:'Mix the dough', type:'active', duration:15,
-    instructions:[
-      'Add 120g of your peaked starter to a large bowl.',
-      'Add 310ml lukewarm water.',
-      'Add 500g flour and 2 tsp salt.',
-      'Mix with your hands until no dry flour remains — it will look shaggy.',
-      'Cover with a damp towel.'
-    ]
-  },
-  { id:'autolyse', name:'Autolyse rest', type:'wait', duration:60,
-    note:'Leave covered. Gluten is developing on its own.'
-  },
-  { id:'fold_1', name:'Stretch & fold — 1', type:'active', duration:5,
-    instructions:[
-      'Wet your hands thoroughly.',
-      'Grab one side of the dough and stretch it up as high as it will go without tearing.',
-      'Fold it over the top.',
-      'Rotate the bowl 90° and repeat three more times — four folds total.',
-      'Cover with the damp towel.'
-    ]
-  },
-  { id:'rest_1', name:'Rest', type:'wait', duration:30 },
-  { id:'fold_2', name:'Stretch & fold — 2', type:'active', duration:5,
-    instructions:[
-      'Wet your hands.',
-      'Four folds, rotating 90° between each.',
-      'Dough should feel a bit stronger and more cooperative.',
-      'Cover.'
-    ]
-  },
-  { id:'rest_2', name:'Rest', type:'wait', duration:30 },
-  { id:'fold_3', name:'Stretch & fold — 3', type:'active', duration:5,
-    instructions:[
-      'Wet your hands.',
-      'Four folds, rotating 90° between each.',
-      'Dough is noticeably more elastic — that\'s the gluten network forming.',
-      'Cover.'
-    ]
-  },
-  { id:'rest_3', name:'Rest', type:'wait', duration:30 },
-  { id:'fold_4', name:'Stretch & fold — 4', type:'active', duration:5,
-    instructions:[
-      'Wet your hands.',
-      'Four folds, rotating 90° between each.',
-      'Final required round. Add more if dough still feels very slack.',
-      'Cover.'
-    ]
-  },
-  { id:'bulk_rest', name:'Bulk ferment', type:'wait', duration:160, min:90, max:240,
-    note:'Done when grown 50–75%, feels pillowy, and jiggles when you shake the bowl.'
-  },
-  { id:'pre_shape', name:'Pre-shape', type:'active', duration:10,
-    instructions:[
-      'Turn the dough out onto an unfloured surface.',
-      'Fold the edges toward the center to form a rough ball.',
-      'Place seam-side-down in a clean bowl.',
-      'Cover with a damp towel.',
-      'Leave on the counter — do not refrigerate yet.'
-    ]
-  },
-  { id:'counter_rest', name:'Counter rest', type:'wait', duration:480, min:360, max:720,
-    note:'Test with a poke — it should spring back slowly.'
-  },
-  { id:'final_shape', name:'Final shape', type:'active', duration:20,
-    instructions:[
-      'Lightly flour your surface.',
-      'Turn dough out and fold the edges inward.',
-      'Flip it seam-side-down.',
-      'Pull corners outward gently and fold them in — build tension.',
-      'Flip again and look for bubbles on the underside.',
-      'Scoot the dough across the surface to tighten it into a ball.',
-      'Dust the dough with flour.',
-      'Line a bowl with a floured towel. Place dough seam-side-up.',
-      'Dust the top, cover with the towel, then plastic wrap.'
-    ]
-  },
-  { id:'cold_proof', name:'Cold proof', type:'wait', optional:true, duration:1080, min:720, max:2160,
-    note:'Refrigerate covered. 12–36 hours. Longer = more flavor.'
-  },
-  { id:'preheat', name:'Preheat oven', type:'active', duration:60,
-    instructions:[
-      'Take dough straight from the fridge — do not let it warm up.',
-      'Place your Dutch oven with lid inside the oven.',
-      'Preheat to 500°F / 260°C.',
-      'A full 60 minutes — the pot needs to be screaming hot.'
-    ]
-  },
-  { id:'score_load', name:'Score and load', type:'active', duration:5,
-    instructions:[
-      'Sprinkle flour on top of the dough.',
-      'Place parchment paper on top, then flip the whole bowl over.',
-      'Make 1–3 quick, confident cuts across the top with a sharp knife or blade.',
-      'Lift the dough by the parchment corners and lower it into the hot Dutch oven.',
-      'Put the lid on immediately.'
-    ]
-  },
-  { id:'bake_covered', name:'Bake covered', type:'wait', duration:20,
-    note:'Do not open the oven. Steam trapped inside is building your crust.'
-  },
-  { id:'bake_open', name:'Remove lid, finish baking', type:'active', duration:20,
-    instructions:[
+function buildRecipe(loaves) {
+  loaves = loaves || 1;
+  const starterG = 120 * loaves;
+  const waterMl  = 310 * loaves;
+  const flourG   = 500 * loaves;
+  const saltTsp  = 2   * loaves;
+
+  // Build sequential bake steps — one Dutch oven bakes loaves one at a time
+  const bakeSteps = [];
+  for (let i = 1; i <= loaves; i++) {
+    const label = loaves > 1 ? ` — loaf ${i} of ${loaves}` : '';
+    if (i > 1) {
+      bakeSteps.push({
+        id:`reheat_${i}`, name:`Reheat Dutch oven${label}`, type:'wait', duration:15,
+        note:'Leave the Dutch oven (without lid) back in the oven for 15 minutes to return to full temp.'
+      });
+    }
+    bakeSteps.push({
+      id:`score_load_${i}`, name:`Score and load${label}`, type:'active', duration:5,
+      instructions:[
+        loaves > 1 ? `Take loaf ${i} out of the fridge and sprinkle flour on top.` : 'Sprinkle flour on top of the dough.',
+        'Place parchment paper on top, then flip the whole bowl over.',
+        'Make 1–3 quick, confident cuts across the top with a sharp knife or blade.',
+        'Lift the dough by the parchment corners and lower it into the hot Dutch oven.',
+        'Put the lid on immediately.'
+      ]
+    });
+    bakeSteps.push({
+      id:`bake_covered_${i}`, name:`Bake covered${label}`, type:'wait', duration:20,
+      note:'Do not open the oven. Steam trapped inside is building your crust.'
+    });
+    const finishInstr = [
       'Use oven mitts — the lid is extremely hot.',
       'Remove the lid and set it somewhere safe.',
       'Reduce temperature to 450°F / 230°C.',
       'Bake 20 more minutes until deep golden brown.'
-    ]
-  },
-  { id:'cool', name:'Cool before cutting', type:'wait', duration:60,
-    note:'The crumb is still setting. Cutting too soon gives a gummy, doughy inside. Wait the full hour.'
+    ];
+    if (i < loaves) finishInstr.push(`Transfer loaf ${i} to a wire rack to cool while you bake loaf ${i+1}.`);
+    bakeSteps.push({
+      id:`bake_open_${i}`, name:`Remove lid, finish baking${label}`, type:'active', duration:20,
+      instructions: finishInstr
+    });
   }
-];
+
+  return [
+    { id:'feed_starter', name:'Feed your starter', type:'active', duration:10,
+      instructions:[
+        'Take your starter out of the fridge.',
+        'Discard down to 50g of starter.',
+        'Add 50g flour and 50g lukewarm water.',
+        'Mix thoroughly until no dry flour remains.',
+        'Cover loosely — not airtight.'
+      ],
+      note:'Use at peak: doubled in size, very bubbly, domed on top.'
+    },
+    { id:'starter_peak', name:'Starter peaks', type:'wait', duration:480, min:240, max:720,
+      note:'Warmer room = faster. Use at peak — doubled, very bubbly, domed on top.'
+    },
+    { id:'mix', name:'Mix the dough', type:'active', duration:10,
+      instructions:[
+        `Add ${waterMl}ml lukewarm water to a large bowl.`,
+        `Add ${flourG}g flour.`,
+        'Mix with your hands until no dry flour remains — it will look shaggy.',
+        'Cover with a damp towel.',
+        'Do not add starter or salt yet — they go in after the rest.'
+      ]
+    },
+    { id:'autolyse', name:'Autolyse rest', type:'wait', duration:60,
+      note:'Leave covered. Gluten is developing on its own. Starter and salt get added at the next step.'
+    },
+    { id:'fold_1', name:'Stretch & fold — 1', type:'active', duration:10,
+      instructions:[
+        `Add ${starterG}g of your peaked starter and ${saltTsp} tsp salt to the rested dough.`,
+        'Squeeze and fold the starter and salt in with your hands until fully incorporated — about 1–2 minutes.',
+        'Wet your hands thoroughly.',
+        'Grab one side of the dough and stretch it up as high as it will go without tearing.',
+        'Fold it over the top.',
+        'Rotate the bowl 90° and repeat three more times — four folds total.',
+        'Cover with the damp towel.'
+      ]
+    },
+    { id:'rest_1', name:'Rest', type:'wait', duration:30 },
+    { id:'fold_2', name:'Stretch & fold — 2', type:'active', duration:5,
+      instructions:[
+        'Wet your hands.',
+        'Four folds, rotating 90° between each.',
+        'Dough should feel a bit stronger and more cooperative.',
+        'Cover.'
+      ]
+    },
+    { id:'rest_2', name:'Rest', type:'wait', duration:30 },
+    { id:'fold_3', name:'Stretch & fold — 3', type:'active', duration:5,
+      instructions:[
+        'Wet your hands.',
+        'Four folds, rotating 90° between each.',
+        'Dough is noticeably more elastic — that\'s the gluten network forming.',
+        'Cover.'
+      ]
+    },
+    { id:'rest_3', name:'Rest', type:'wait', duration:30 },
+    { id:'fold_4', name:'Stretch & fold — 4', type:'active', duration:5,
+      instructions:[
+        'Wet your hands.',
+        'Four folds, rotating 90° between each.',
+        'Final required round. Add more if dough still feels very slack.',
+        'Cover.'
+      ]
+    },
+    { id:'bulk_rest', name:'Bulk ferment', type:'wait', duration:160, min:90, max:240,
+      note:'Done when grown 50–75%, feels pillowy, and jiggles when you shake the bowl.'
+    },
+    { id:'pre_shape', name:'Pre-shape', type:'active', duration: loaves===1 ? 10 : loaves===2 ? 15 : 20,
+      instructions:[
+        'Turn the dough out onto an unfloured surface.',
+        ...(loaves > 1 ? [`Divide the dough into ${loaves} equal pieces using a bench scraper or knife.`] : []),
+        `Fold the edges toward the center to form a rough ball${loaves > 1 ? ' for each piece' : ''}.`,
+        `Place seam-side-down in a clean bowl${loaves > 1 ? ' (use separate bowls or space them apart)' : ''}.`,
+        'Cover with a damp towel.',
+        'Leave on the counter — do not refrigerate yet.'
+      ]
+    },
+    { id:'counter_rest', name:'Bench rest', type:'wait', duration:30, min:20, max:45,
+      note:'Dough should feel relaxed but still hold its shape — ready to final shape.'
+    },
+    { id:'final_shape', name:'Final shape', type:'active', duration: loaves===1 ? 20 : loaves===2 ? 30 : 45,
+      instructions:[
+        'Lightly flour your surface.',
+        ...(loaves > 1 ? [`Shape each of the ${loaves} pieces one at a time.`] : []),
+        'Turn dough out and fold the edges inward.',
+        'Flip it seam-side-down.',
+        'Pull corners outward gently and fold them in — build tension.',
+        'Flip again and look for bubbles on the underside.',
+        'Scoot the dough across the surface to tighten it into a ball.',
+        'Dust the dough with flour.',
+        'Line a bowl with a floured towel. Place dough seam-side-up.',
+        'Dust the top, cover with the towel, then plastic wrap.',
+        ...(loaves > 1 ? [`Repeat for all ${loaves} loaves.`] : [])
+      ]
+    },
+    { id:'cold_proof', name:'Cold proof', type:'wait', optional:true, duration:1080, min:720, max:2160,
+      note: loaves > 1
+        ? `Refrigerate all ${loaves} loaves covered. 12–36 hours. Longer = more flavor. Keep them all in the fridge — pull each one out only when it's its turn to bake.`
+        : 'Refrigerate covered. 12–36 hours. Longer = more flavor.'
+    },
+    { id:'preheat', name:'Preheat oven', type:'active', duration:60,
+      instructions:[
+        'Take dough straight from the fridge — do not let it warm up.',
+        'Place your Dutch oven with lid inside the oven.',
+        'Preheat to 500°F / 260°C.',
+        'A full 60 minutes — the pot needs to be screaming hot.',
+        ...(loaves > 1 ? [`You'll bake each loaf one at a time. Keep the rest in the fridge until their turn.`] : [])
+      ]
+    },
+    ...bakeSteps,
+    { id:'cool', name:'Cool before cutting', type:'wait', duration:120,
+      note:'The crumb is still setting — starch retrogradation takes at least 2 hours. Cutting too soon gives a gummy, doughy inside. Wait the full 2 hours.'
+    }
+  ];
+}
 
 // ── STORAGE ──────────────────────────────────────────────────────────────────
 function saveBake(b) { localStorage.setItem('sourdough_bake', JSON.stringify(b)); }
@@ -480,10 +524,10 @@ function stepConflicts(step, sl, wakeH, wakeM) {
   return false;
 }
 
-function buildSchedule(targetTime, opts, useColdProof) {
+function buildSchedule(targetTime, opts, useColdProof, recipe) {
   const steps = [];
   let cursor = new Date(targetTime);
-  const rev = [...RECIPE].reverse();
+  const rev = [...recipe].reverse();
   for (const def of rev) {
     if (def.id === 'cold_proof' && !useColdProof) continue;
     let dur = def.duration;
@@ -499,24 +543,30 @@ function buildSchedule(targetTime, opts, useColdProof) {
   return steps;
 }
 
-function findSchedule(dayStr, tod, sleepStart, sleepEnd, wakeTime, coldProof) {
-  const todMins = TOD[tod] || TOD.afternoon;
+function findSchedule(dayStr, tod, sleepStart, sleepEnd, wakeTime, coldProof, loaves) {
+  const recipe = buildRecipe(loaves || 1);
   const [y,mo,d] = dayStr.split('-').map(Number);
-  const target = new Date(y, mo-1, d, Math.floor(todMins/60), todMins%60, 0, 0);
   const sl = parseSleep(sleepStart, sleepEnd);
   const [wh, wm] = (wakeTime||'07:00').split(':').map(Number);
+
+  // For 'anytime', try all time slots; otherwise just the chosen one
+  const todMinsList = tod === 'anytime'
+    ? [TOD.morning, TOD.afternoon, TOD.evening]
+    : [TOD[tod] || TOD.afternoon];
 
   // Search order: preferred defaults first, then expand range
   const spOpts = [480,360,600,720,240];      // 8h, 6h, 10h, 12h, 4h
   const brOpts = [160,120,200,90,240];
-  const crOpts = [480,420,540,360,600,660,720];
+  const crOpts = [30,25,35,20,40,45];
   const cpOpts = coldProof ? [1080,720,1440,900,1800,2160] : [0];
 
+  for (const todMins of todMinsList)
   for (const cp of cpOpts)
   for (const cr of crOpts)
   for (const sp of spOpts)
   for (const br of brOpts) {
-    const sched = buildSchedule(target, {sp,br,cr,cp}, coldProof);
+    const target = new Date(y, mo-1, d, Math.floor(todMins/60), todMins%60, 0, 0);
+    const sched = buildSchedule(target, {sp,br,cr,cp}, coldProof, recipe);
     if (sched.every(s => !stepConflicts(s, sl, wh, wm))) {
       return { schedule:sched, targetTime:target.toISOString() };
     }
@@ -524,10 +574,10 @@ function findSchedule(dayStr, tod, sleepStart, sleepEnd, wakeTime, coldProof) {
   return null;
 }
 
-function buildScheduleForward(startTime, opts, useColdProof) {
+function buildScheduleForward(startTime, opts, useColdProof, recipe) {
   const steps = [];
   let cursor = new Date(startTime);
-  for (const def of RECIPE) {
+  for (const def of recipe) {
     if (def.id === 'cold_proof' && !useColdProof) continue;
     let dur = def.duration;
     if (def.id === 'starter_peak') dur = opts.sp;
@@ -542,23 +592,30 @@ function buildScheduleForward(startTime, opts, useColdProof) {
   return steps;
 }
 
-function findScheduleForward(startTime, sleepStart, sleepEnd, wakeTime, coldProof) {
+function findScheduleForward(requestedStart, sleepStart, sleepEnd, wakeTime, coldProof, loaves) {
+  const recipe = buildRecipe(loaves || 1);
   const sl = parseSleep(sleepStart, sleepEnd);
   const [wh, wm] = (wakeTime||'07:00').split(':').map(Number);
 
   const spOpts = [480,360,600,720,240];
   const brOpts = [160,120,200,90,240];
-  const crOpts = [480,420,540,360,600,660,720];
+  const crOpts = [30,25,35,20,40,45];
   const cpOpts = coldProof ? [1080,720,1440,900,1800,2160] : [0];
 
-  for (const cp of cpOpts)
-  for (const cr of crOpts)
-  for (const sp of spOpts)
-  for (const br of brOpts) {
-    const sched = buildScheduleForward(startTime, {sp,br,cr,cp}, coldProof);
-    if (sched.every(s => !stepConflicts(s, sl, wh, wm))) {
-      const targetTime = sched[sched.length-1].endTime;
-      return { schedule:sched, targetTime };
+  // Try requested start, then walk forward in 30-min steps for up to 48 hours
+  for (let bump = 0; bump < 96; bump++) {
+    const startTime = new Date(requestedStart.getTime() + bump * 30 * 60000);
+    // Skip if start itself is during sleep — first active step will always conflict
+    if (isDuringSleep(startTime, sl)) continue;
+    for (const cp of cpOpts)
+    for (const cr of crOpts)
+    for (const sp of spOpts)
+    for (const br of brOpts) {
+      const sched = buildScheduleForward(startTime, {sp,br,cr,cp}, coldProof, recipe);
+      if (sched.every(s => !stepConflicts(s, sl, wh, wm))) {
+        const targetTime = sched[sched.length-1].endTime;
+        return { schedule:sched, targetTime, requestedStart, adjustedStart:startTime };
+      }
     }
   }
   return null;
@@ -578,14 +635,43 @@ function fmtCountdown(dt) {
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let formState = { day: null, tod: 'afternoon', sleepStart: '23:00', sleepEnd: '07:00', coldProof: false, planMode: 'done' };
+let formState = { day: null, tod: 'afternoon', sleepStart: '23:00', sleepEnd: '07:00', coldProof: false, planMode: 'done', loaves: 1 };
 let pendingSchedule = null;
 let notifTimers = [];
 let stepChecked = false;
+let currentStepId = null;
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+  }
+}
+function releaseWakeLock() {
+  if (wakeLock) { try { wakeLock.release(); } catch(e) {} wakeLock = null; }
+}
+
+function getTimingStatus(step) {
+  const now = Date.now();
+  const start = new Date(step.startTime).getTime();
+  const diffMins = Math.round((now - start) / 60000);
+  if (diffMins < -5) return { text: Math.abs(diffMins) + ' min early', cls: 'timing-early' };
+  if (diffMins > 15) return { text: diffMins + ' min behind schedule', cls: 'timing-late' };
+  return { text: 'On schedule', cls: 'timing-on' };
+}
+
+function openStep(id) {
+  const bake = loadBake();
+  if (!bake) return;
+  const step = bake.schedule.find(s => s.id === id);
+  if (!step) return;
+  renderStepScreen(step, bake.schedule);
+}
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   document.getElementById('screen-'+id).classList.remove('hidden');
+  if (id !== 'step') releaseWakeLock();
 }
 
 // ── SCHEDULING FORM ───────────────────────────────────────────────────────────
@@ -637,6 +723,12 @@ function setNow() {
   });
 }
 
+function selectLoaves(btn) {
+  btn.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.remove('selected'));
+  btn.classList.add('selected');
+  formState.loaves = parseInt(btn.dataset.loaves);
+}
+
 function selectTOD(btn) {
   btn.closest('.chips').querySelectorAll('.chip').forEach(x=>x.classList.remove('selected'));
   btn.classList.add('selected');
@@ -657,7 +749,7 @@ function planBake() {
   errEl.style.display = 'none';
   const ss = document.getElementById('sleep-start').value || '23:00';
   const se = document.getElementById('sleep-end').value || '07:00';
-  const wt = document.getElementById('wake-time').value || '07:00';
+  const wt = se; // wake time = sleep end
 
   let result;
   if (formState.planMode === 'start') {
@@ -665,14 +757,14 @@ function planBake() {
     const [sh, sm] = timeVal.split(':').map(Number);
     const [y, mo, d] = formState.day.split('-').map(Number);
     const startTime = new Date(y, mo-1, d, sh, sm, 0, 0);
-    result = findScheduleForward(startTime, ss, se, wt, formState.coldProof);
+    result = findScheduleForward(startTime, ss, se, wt, formState.coldProof, formState.loaves);
     if (!result) {
       errEl.style.display = 'block';
       errEl.textContent = 'No conflict-free schedule found starting at that time. Try a different start time or adjust your sleep window.';
       return;
     }
   } else {
-    result = findSchedule(formState.day, formState.tod, ss, se, wt, formState.coldProof);
+    result = findSchedule(formState.day, formState.tod, ss, se, wt, formState.coldProof, formState.loaves);
     if (!result) {
       errEl.style.display = 'block';
       const tod = formState.tod;
@@ -686,21 +778,27 @@ function planBake() {
   }
 
   pendingSchedule = result;
-  renderPreview(result.schedule, result.targetTime, formState.planMode);
+  renderPreview(result.schedule, result.targetTime, formState.planMode, result.requestedStart);
   showScreen('preview');
 }
 
 // ── PREVIEW ───────────────────────────────────────────────────────────────────
-function renderPreview(schedule, targetTime, mode) {
+function renderPreview(schedule, targetTime, mode, requestedStart) {
   const first = schedule[0];
   const activeMins = schedule.filter(s=>s.type==='active').reduce((a,s)=>a+s.duration,0);
   const totalMins  = Math.round((new Date(targetTime)-new Date(first.startTime))/60000);
 
   if (mode === 'start') {
+    const wasAdjusted = requestedStart &&
+      Math.abs(new Date(first.startTime) - new Date(requestedStart)) > 60000;
+    const adjustedNote = wasAdjusted
+      ? `<div style="margin-top:8px;font-size:12px;color:rgba(0,0,0,0.5)">Adjusted — your requested ${fmtTime(requestedStart)} conflicted with your sleep window</div>`
+      : '';
     document.getElementById('preview-card').innerHTML = `
       <div class="ac-label">Bake starting</div>
       <div class="ac-value">${fmtDate(first.startTime)}</div>
-      <div class="ac-sub">Feed starter ${fmtTime(first.startTime)} · Bread ready ${fmtShort(targetTime)}</div>`;
+      <div class="ac-sub">Feed starter ${fmtTime(first.startTime)} · Bread ready ${fmtShort(targetTime)}</div>
+      ${adjustedNote}`;
   } else {
     document.getElementById('preview-card').innerHTML = `
       <div class="ac-label">Fresh bread ready</div>
@@ -777,13 +875,16 @@ function renderTimeline(schedule, showStatus) {
       const isDone= showStatus && s.completed;
       const dotCls= isDone ? 'done' : isCur ? 'now' : s.type==='active' ? 'active' : 'wait';
       const nameCls= isDone ? 'faded' : s.type==='wait' ? 'muted' : '';
-      return `<div class="tl-row">
+      const clickAttr = showStatus ? `onclick="openStep('${s.id}')" style="cursor:pointer"` : '';
+      const chevron = showStatus ? `<div style="margin-left:auto;padding-left:10px;color:var(--t3);display:flex;align-items:center"><i class="ti ti-chevron-right" style="font-size:14px"></i></div>` : '';
+      return `<div class="tl-row" ${clickAttr}>
         <div class="tl-dot-col"><div class="tl-dot ${dotCls}"></div></div>
         <div class="tl-body">
           <div class="tl-time">${fmtTime(s.startTime)}</div>
           <div class="tl-name ${nameCls}">${s.name}</div>
           <div class="tl-dur">${fmtDur(s.duration)}</div>
         </div>
+        ${chevron}
       </div>`;
     }).join('');
     return `<div class="day-group"><div class="day-header">${fmtDate(date)}</div>${rows}</div>`;
@@ -794,34 +895,75 @@ function renderTimeline(schedule, showStatus) {
 function goToCurrentStep() {
   const bake = loadBake();
   if (!bake) return;
-  const now  = new Date();
+  const now = new Date();
   const step = bake.schedule.find(s =>
     s.type==='active' && !s.completed &&
     now >= new Date(s.startTime) && now <= new Date(s.endTime)
   );
-  if (step) renderStepScreen(step, bake.schedule);
+  if (step) openStep(step.id);
 }
 
 function renderStepScreen(step, schedule) {
   stepChecked = false;
+  currentStepId = step.id;
   const activeSteps = schedule.filter(s=>s.type==='active');
   const idx = activeSteps.findIndex(s=>s.id===step.id);
 
-  document.getElementById('step-counter').textContent = `${idx+1} of ${activeSteps.length}`;
-  document.getElementById('step-title').textContent   = step.name;
+  // Step counter (active steps only)
+  document.getElementById('step-counter').textContent = step.type==='active' ? `${idx+1} of ${activeSteps.length}` : '';
+
+  // Tag label + color
+  const now = new Date();
+  const isActive = !step.completed && now >= new Date(step.startTime) && now <= new Date(step.endTime);
+  const tagEl = document.getElementById('step-tag');
+  if (step.completed) {
+    tagEl.textContent = 'Completed';
+    tagEl.style.cssText = 'background:var(--s2);color:var(--t3)';
+  } else if (step.type === 'wait') {
+    tagEl.textContent = 'Rest';
+    tagEl.style.cssText = 'background:var(--s2);color:var(--t2)';
+  } else if (isActive) {
+    tagEl.textContent = 'Active now';
+    tagEl.style.cssText = '';
+  } else {
+    tagEl.textContent = 'Upcoming';
+    tagEl.style.cssText = 'background:var(--s2);color:var(--t2)';
+  }
+
+  // Timing badge
+  const timing = getTimingStatus(step);
+  document.getElementById('step-timing').innerHTML = `<span class="timing-badge ${timing.cls}">${timing.text}</span>`;
+
+  document.getElementById('step-title').textContent = step.name;
   document.getElementById('step-duration').textContent = `About ${fmtDur(step.duration)}`;
 
+  // Wait note (shown for all steps that have a note)
+  const waitNote = document.getElementById('step-wait-note');
+  if (step.note) {
+    waitNote.textContent = step.note;
+    waitNote.style.display = '';
+  } else {
+    waitNote.style.display = 'none';
+  }
+
+  // Instructions
   const instrHTML = (step.instructions||[]).map((t,i) =>
     `<div class="inst-row"><div class="inst-num">${i+1}</div><div class="inst-text">${t}</div></div>`
   ).join('');
   document.getElementById('step-instructions').innerHTML = instrHTML;
 
-  const check = document.getElementById('step-check');
-  const btn   = document.getElementById('done-btn');
-  check.classList.remove('checked');
-  btn.disabled = true;
+  // Complete area — only for active (non-wait) uncompleted steps
+  const completeArea = document.getElementById('step-complete-area');
+  if (step.type === 'active' && !step.completed) {
+    completeArea.style.display = '';
+    document.getElementById('step-check').classList.remove('checked');
+    document.getElementById('done-btn').disabled = true;
+  } else {
+    completeArea.style.display = 'none';
+  }
 
   showScreen('step');
+  requestWakeLock();
 }
 
 function toggleCheck() {
@@ -834,17 +976,23 @@ function completeStep() {
   if (!stepChecked) return;
   const bake = loadBake();
   if (!bake) return;
-  const now  = new Date();
-  const step = bake.schedule.find(s =>
-    s.type==='active' && !s.completed &&
-    now >= new Date(s.startTime) && now <= new Date(s.endTime)
-  );
+  const step = bake.schedule.find(s => s.id === currentStepId);
   if (!step) { showScreen('schedule'); return; }
 
   step.completed = true;
   saveBake(bake);
   renderScheduleScreen();
-  showScreen('schedule');
+
+  // Auto-advance to the next incomplete active step
+  const activeSteps = bake.schedule.filter(s => s.type === 'active');
+  const currentIdx = activeSteps.findIndex(s => s.id === currentStepId);
+  const nextStep = activeSteps.slice(currentIdx + 1).find(s => !s.completed);
+
+  if (nextStep) {
+    renderStepScreen(nextStep, bake.schedule);
+  } else {
+    showScreen('schedule');
+  }
 }
 
 // ── CANCEL ────────────────────────────────────────────────────────────────────
